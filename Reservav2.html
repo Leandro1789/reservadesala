@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reserva - Paróquia</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --parish-blue: #2c5e8c;
+        }
+
+        body {
+            padding-top: 56px;
+            /* Offset para a navbar fixa */
+            background-color: #f4f7f6;
+        }
+
+        .bg-parish {
+            background-color: var(--parish-blue) !important;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            padding: 20px 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            width: 240px;
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 20px;
+        }
+
+        /* Responsividade da Sidebar */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                top: 0;
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+                z-index: 100;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar .nav {
+                flex-direction: row !important;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .sidebar .nav-link {
+                padding: 0.5rem 0.8rem;
+            }
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+            margin-right: 8px;
+        }
+
+        .sidebar .nav-link.active {
+            background-color: var(--parish-blue);
+            color: white;
+        }
+
+        .sidebar .nav-link:hover:not(.active) {
+            background-color: #e9ecef;
+        }
+
+        /* Estilos do Calendário */
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        #currentMonthYear {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #dee2e6;
+            border: 1px solid #dee2e6;
+        }
+
+        .calendar-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #e9ecef;
+        }
+
+        .calendar-day {
+            min-height: 130px;
+            padding: 8px;
+            background-color: #fff;
+            font-size: 0.9rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .calendar-day.other-month {
+            background-color: #f8f9fa;
+            color: #adb5bd;
+        }
+
+        .calendar-day .day-number {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .calendar-day .day-number.today {
+            background-color: var(--parish-blue);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-block;
+            text-align: center;
+            line-height: 28px;
+        }
+
+        .reservation-entries {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 5px;
+        }
+
+        .reservation-entry {
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            margin-top: 4px;
+            border-radius: 4px;
+            color: #212529;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            display: block;
+        }
+
+        .status-confirmed {
+            background-color: #d1e7dd;
+            border-left: 4px solid #198754;
+        }
+
+        /* Verde */
+        .status-pending {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        /* Amarelo */
+        .status-cancelled {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        /* Vermelho */
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-parish fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#">
+                <img src="assets/logo-paroquia.png" alt="Paróquia Cristo Rei"
+                    style="height:40px; margin-right:10px; vertical-align:middle;">
+                <span class="fw-bold">Sistema de Reserva - Paróquia</span>
+
+                Sistema de Reserva - Paróquia
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu"
+                aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdownMenuLink"
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i> Administrador
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configurações</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Sair</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item mb-1">
+                            <a class="nav-link active" id="nav-dashboard" data-bs-toggle="pill" href="#tab-dashboard"
+                                role="tab" aria-controls="tab-dashboard" aria-selected="true">
+                                <i class="bi bi-speedometer2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item mb-1">
+                            <a class="nav-link" id="nav-salas" data-bs-toggle="pill" href="#tab-salas" role="tab"
+                                aria-controls="tab-salas" aria-selected="false">
+                                <i class="bi bi-door-open"></i>Salas
+                            </a>
+                        </li>
+                        <li class="nav-item mb-1">
+                            <a class="nav-link" id="nav-nova-reserva" data-bs-toggle="pill" href="#tab-nova-reserva"
+                                role="tab" aria-controls="tab-nova-reserva" aria-selected="false">
+                                <i class="bi bi-calendar-plus"></i>Nova Reserva
+                            </a>
+                        </li>
+                        <li class="nav-item mb-1">
+                            <a class="nav-link" id="nav-reservas" data-bs-toggle="pill" href="#tab-reservas" role="tab"
+                                aria-controls="tab-reservas" aria-selected="false">
+                                <i class="bi bi-list-task"></i>Reservas
+                            </a>
+                        </li>
+                        <li class="nav-item mb-1">
+                            <a class="nav-link" id="nav-calendario" data-bs-toggle="pill" href="#tab-calendario"
+                                role="tab" aria-controls="tab-calendario" aria-selected="false">
+                                <i class="bi bi-calendar-week"></i>Calendário
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="main-content col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="tab-content" id="myTabContent">
+
+                    <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel"
+                        aria-labelledby="nav-dashboard">
+                        <h1 class="h2">Dashboard</h1>
+                        <div class="text-center mb-4">
+                            <img src="assets/logo-paroquia.png" alt="Paróquia Cristo Rei - Blumenau"
+                                style="max-width:120px; opacity:0.9;">
+                            <p class="mt-2 text-muted">Paróquia Cristo Rei - Blumenau / SC</p>
+                        </div>
+
+                        <p class="lead">Bem-vindo a Reserva de Ambientes - Paróquia.</p>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card text-white bg-primary mb-3">
+                                    <div class="card-header">Salas Cadastradas</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="dashboard-total-rooms">0</h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="card text-white bg-info mb-3" id="card-salas-disponiveis"
+                                    style="cursor:pointer;">
+                                    <div class="card-header">Salas Disponíveis (Hoje)</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="dashboard-available-rooms">0</h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="card text-white bg-success mb-3">
+                                    <div class="card-header">Reservas Ativas</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="dashboard-total-reservations">0</h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="card text-dark bg-warning mb-3">
+                                    <div class="card-header">Reservas Pendentes</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="dashboard-pending-reservations">0</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="availableRoomsModal" tabindex="-1"
+                            aria-labelledby="availableRoomsModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-info text-white">
+                                        <h5 class="modal-title" id="availableRoomsModalLabel">Salas Disponíveis Hoje
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <ul id="availableRoomsList" class="list-group">
+                                        </ul>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                Próximas Reservas
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group" id="upcoming-reservations-list">
+                                    <li class="list-group-item">Nenhuma reserva futura encontrada.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-salas" role="tabpanel" aria-labelledby="nav-salas">
+                        <div
+                            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Gestão de Salas</h1>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#roomModal"
+                                onclick="prepareAddRoom()">
+                                <i class="bi bi-plus-circle me-1"></i> Adicionar Sala
+                            </button>
+                        </div>
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover align-middle" id="roomsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th scope="col">Nome</th>
+                                                <th scope="col">Capacidade</th>
+                                                <th scope="col">Localização</th>
+                                                <th scope="col">Recursos</th>
+                                                <th scope="col">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-nova-reserva" role="tabpanel" aria-labelledby="nav-nova-reserva">
+                        <div
+                            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Criar Nova Reserva</h1>
+                        </div>
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <form id="reservationForm" class="needs-validation" novalidate>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="respName" class="form-label">Nome do Responsável</label>
+                                            <input type="text" class="form-control" id="respName" required>
+                                            <div class="invalid-feedback">Campo obrigatório.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="respEmail" class="form-label">E-mail do Responsável</label>
+                                            <input type="email" class="form-control" id="respEmail" required>
+                                            <div class="invalid-feedback">Insira um e-mail válido.</div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="parishEmail" class="form-label">E-mail da Paróquia
+                                                (Notificação)</label>
+                                            <input type="email" class="form-control" id="parishEmail"
+                                                value="paroquia@email.com" readonly>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="roomSelect" class="form-label">Sala</label>
+                                            <select class="form-select" id="roomSelect" required>
+                                                <option value="" selected disabled>Selecione uma sala...</option>
+                                            </select>
+                                            <div class="invalid-feedback">Selecione uma sala.</div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label for="eventName" class="form-label">Nome do Evento/Atividade</label>
+                                            <input type="text" class="form-control" id="eventName" required>
+                                            <div class="invalid-feedback">Campo obrigatório.</div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="startDate" class="form-label">Data de Início</label>
+                                            <input type="date" class="form-control" id="startDate" required>
+                                            <div class="invalid-feedback">Data inválida.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="startTime" class="form-label">Horário de Início</label>
+                                            <input type="time" class="form-control" id="startTime" required>
+                                            <div class="invalid-feedback">Horário inválido.</div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="endDate" class="form-label">Data de Término</label>
+                                            <input type="date" class="form-control" id="endDate" required>
+                                            <div class="invalid-feedback">A data final deve ser igual ou maior que a
+                                                inicial.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="endTime" class="form-label">Horário de Término</label>
+                                            <input type="time" class="form-control" id="endTime" required>
+                                            <div class="invalid-feedback">O horário final deve ser maior que o inicial.
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label for="reservationStatus" class="form-label">Status</label>
+                                            <select class="form-select" id="reservationStatus" required>
+                                                <option value="pending" selected>Pendente</option>
+                                                <option value="confirmed">Confirmada</option>
+                                                <option value="cancelled">Cancelada</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label for="observations" class="form-label">Observações</label>
+                                            <textarea class="form-control" id="observations" rows="3"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <button class="w-100 btn btn-primary btn-lg" type="submit">
+                                        <i class="bi bi-check-circle me-1"></i> Salvar Reserva
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-reservas" role="tabpanel" aria-labelledby="nav-reservas">
+                        <div
+                            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Todas as Reservas</h1>
+                        </div>
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover align-middle" id="reservationsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th scope="col">Evento</th>
+                                                <th scope="col">Sala</th>
+                                                <th scope="col">Responsável</th>
+                                                <th scope="col">Início</th>
+                                                <th scope="col">Término</th>
+                                                <th scope="col">Status</th>
+                                                <th scope="col">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-calendario" role="tabpanel" aria-labelledby="nav-calendario">
+                        <div
+                            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">Calendário de Reservas</h1>
+                        </div>
+
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="calendar-controls">
+                                    <button id="prevMonth" class="btn btn-outline-primary"><i
+                                            class="bi bi-chevron-left"></i></button>
+                                    <span id="currentMonthYear" class="fw-bold"></span>
+                                    <button id="nextMonth" class="btn btn-outline-primary"><i
+                                            class="bi bi-chevron-right"></i></button>
+                                </div>
+
+                                <div class="calendar-grid">
+                                    <div class="calendar-header">Dom</div>
+                                    <div class="calendar-header">Seg</div>
+                                    <div class="calendar-header">Ter</div>
+                                    <div class="calendar-header">Qua</div>
+                                    <div class="calendar-header">Qui</div>
+                                    <div class="calendar-header">Sex</div>
+                                    <div class="calendar-header">Sáb</div>
+                                </div>
+                                <div id="calendarGrid" class="calendar-grid">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal fade" id="roomModal" tabindex="-1" aria-labelledby="roomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-parish text-white">
+                    <h5 class="modal-title" id="roomModalLabel">Adicionar Sala</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="roomForm">
+                        <input type="hidden" id="roomId">
+                        <div class="mb-3">
+                            <label for="roomName" class="form-label">Nome da Sala</label>
+                            <input type="text" class="form-control" id="roomName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomCapacity" class="form-label">Capacidade</label>
+                            <input type="number" class="form-control" id="roomCapacity" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomLocation" class="form-label">Localização</label>
+                            <input type="text" class="form-control" id="roomLocation">
+                        </div>
+                        <div class="mb-3">
+                            <label for="roomResources" class="form-label">Recursos (separados por vírgula)</label>
+                            <input type="text" class="form-control" id="roomResources"
+                                placeholder="Ex: Projetor, Wi-Fi, Quadro branco">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" form="roomForm" id="saveRoomButton">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Você tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="reservationDetailModal" tabindex="-1" aria-labelledby="reservationDetailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reservationDetailModalLabel">Detalhes da Reserva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="reservationDetailBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+    <script>
+        // Variáveis globais de estado
+        let rooms = [];
+        let reservations = [];
+        let currentRoomIndex = null; // Usado para saber qual sala está sendo editada
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+
+        // Instâncias de Modais Bootstrap
+        let roomModal, confirmDeleteModal, reservationDetailModal;
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa modais
+            roomModal = new bootstrap.Modal(document.getElementById('roomModal'));
+            confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            reservationDetailModal = new bootstrap.Modal(document.getElementById('reservationDetailModal'));
+            // (O modal availableRoomsModal é instanciado no clique)
+
+            // Carrega dados do LocalStorage
+            loadRoomsFromStorage();
+            loadReservationsFromStorage();
+
+            // Renderiza componentes
+            renderRoomsTable();
+            renderReservationsTable();
+            renderCalendar(currentMonth, currentYear);
+            populateRoomSelect();
+            updateDashboard(); // Esta função agora também chama updateAvailableRooms()
+
+            // Adiciona Event Listeners
+            document.getElementById('roomForm').addEventListener('submit', handleRoomSubmit);
+            document.getElementById('reservationForm').addEventListener('submit', handleReservationSubmit);
+            document.getElementById('prevMonth').addEventListener('click', showPrevMonth);
+            document.getElementById('nextMonth').addEventListener('click', showNextMonth);
+
+            // Listener para mudar de aba (para atualizar o calendário se necessário)
+            document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(tab => {
+                tab.addEventListener('shown.bs.tab', event => {
+                    if (event.target.id === 'nav-calendario') {
+                        renderCalendar(currentMonth, currentYear);
+                    }
+                    if (event.target.id === 'nav-dashboard') {
+                        updateDashboard();
+                    }
+                });
+            });
+        });
+
+        // --- FUNÇÕES DE PERSISTÊNCIA (LocalStorage) ---
+
+        function saveRoomsToStorage() {
+            localStorage.setItem('rooms', JSON.stringify(rooms));
+        }
+
+        function loadRoomsFromStorage() {
+            rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+        }
+
+        function saveReservationsToStorage() {
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+        }
+
+        function loadReservationsFromStorage() {
+            reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+        }
+
+        // --- MÓDULO DE SALAS (CRUD) ---
+
+        /** Renderiza a tabela de salas */
+        function renderRoomsTable() {
+            const tableBody = document.querySelector('#roomsTable tbody');
+            tableBody.innerHTML = '';
+
+            if (rooms.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma sala cadastrada.</td></tr>';
+                return;
+            }
+
+            rooms.forEach((room, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${room.name}</td>
+                    <td>${room.capacity}</td>
+                    <td>${room.location}</td>
+                    <td>${room.resources}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="prepareEditRoom(${index})" title="Editar">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('room', ${index})" title="Excluir">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /** Prepara o modal para adicionar uma nova sala */
+        function prepareAddRoom() {
+            currentRoomIndex = null;
+            document.getElementById('roomForm').reset();
+            document.getElementById('roomModalLabel').textContent = 'Adicionar Nova Sala';
+            document.getElementById('saveRoomButton').textContent = 'Salvar';
+        }
+
+        /** Prepara o modal para editar uma sala existente */
+        function prepareEditRoom(index) {
+            currentRoomIndex = index;
+            const room = rooms[index];
+            document.getElementById('roomId').value = index;
+            document.getElementById('roomName').value = room.name;
+            document.getElementById('roomCapacity').value = room.capacity;
+            document.getElementById('roomLocation').value = room.location;
+            document.getElementById('roomResources').value = room.resources;
+
+            document.getElementById('roomModalLabel').textContent = 'Editar Sala';
+            document.getElementById('saveRoomButton').textContent = 'Atualizar';
+            roomModal.show();
+        }
+
+        /** Salva (adiciona ou edita) uma sala */
+        function handleRoomSubmit(event) {
+            event.preventDefault();
+            const newRoom = {
+                name: document.getElementById('roomName').value,
+                capacity: document.getElementById('roomCapacity').value,
+                location: document.getElementById('roomLocation').value,
+                resources: document.getElementById('roomResources').value
+            };
+
+            if (currentRoomIndex === null) {
+                // Adicionar nova
+                rooms.push(newRoom);
+            } else {
+                // Editar existente
+                rooms[currentRoomIndex] = newRoom;
+            }
+
+            saveRoomsToStorage();
+            renderRoomsTable();
+            populateRoomSelect(); // Atualiza o select no formulário de reserva
+            updateDashboard();
+            roomModal.hide();
+        }
+
+        /** Exclui uma sala */
+        function deleteRoom(index) {
+            rooms.splice(index, 1);
+            saveRoomsToStorage();
+            renderRoomsTable();
+            populateRoomSelect(); // Atualiza o select
+            updateDashboard();
+        }
+
+        // --- MÓDULO DE RESERVAS ---
+
+        /** Popula o <select> de salas no formulário de reserva */
+        function populateRoomSelect() {
+            const select = document.getElementById('roomSelect');
+            select.innerHTML = '<option value="" selected disabled>Selecione uma sala...</option>';
+            rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.name; // Usamos o nome como ID único
+                option.textContent = `${room.name} (Cap: ${room.capacity})`;
+                select.appendChild(option);
+            });
+        }
+
+        /** Renderiza a tabela de "Todas as Reservas" */
+        function renderReservationsTable() {
+            const tableBody = document.querySelector('#reservationsTable tbody');
+            tableBody.innerHTML = '';
+
+            if (reservations.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhuma reserva encontrada.</td></tr>';
+                return;
+            }
+
+            // Ordena por data de início
+            const sortedReservations = [...reservations].sort((a, b) => new Date(a.startDate + 'T' + a.startTime) - new Date(b.startDate + 'T' + b.startTime));
+
+            sortedReservations.forEach((res, index) => {
+                // Encontrar o índice original para exclusão
+                const originalIndex = reservations.findIndex(r => r.id === res.id);
+
+                const statusBadge = {
+                    pending: '<span class="badge bg-warning text-dark">Pendente</span>',
+                    confirmed: '<span class="badge bg-success">Confirmada</span>',
+                    cancelled: '<span class="badge bg-danger">Cancelada</span>'
+                };
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${res.eventName}</td>
+                    <td>${res.room}</td>
+                    <td>${res.respName}</td>
+                    <td>${formatDateTime(res.startDate, res.startTime)}</td>
+                    <td>${formatDateTime(res.endDate, res.endTime)}</td>
+                    <td>${statusBadge[res.status] || ''}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="confirmDelete('reservation', ${originalIndex})" title="Excluir">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        /** Manipula o envio do formulário de nova reserva */
+        function handleReservationSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+
+            // Validação Bootstrap
+            if (!form.checkValidity()) {
+                event.stopPropagation();
+                form.classList.add('was-validated');
+                return;
+            }
+            form.classList.remove('was-validated');
+
+            const newReservation = {
+                id: Date.now(), // ID único
+                respName: document.getElementById('respName').value,
+                respEmail: document.getElementById('respEmail').value,
+                room: document.getElementById('roomSelect').value,
+                eventName: document.getElementById('eventName').value,
+                startDate: document.getElementById('startDate').value,
+                startTime: document.getElementById('startTime').value,
+                endDate: document.getElementById('endDate').value,
+                endTime: document.getElementById('endTime').value,
+                status: document.getElementById('reservationStatus').value,
+                observations: document.getElementById('observations').value
+            };
+
+            // Validações personalizadas
+            if (!validateReservation(newReservation)) {
+                return; // A função de validação mostrará o alerta
+            }
+
+            // Salvar
+            reservations.push(newReservation);
+            saveReservationsToStorage();
+
+            // Atualizar UI
+            renderReservationsTable();
+            renderCalendar(currentMonth, currentYear); // Atualiza o calendário
+            updateDashboard();
+
+            // Feedback e Reset
+            alert('🕊️ Reserva salva com sucesso! Um e-mail (simulado) será enviado para confirmação.');
+            form.reset();
+
+            // Mudar para a aba do calendário
+            const calendarTab = document.getElementById('nav-calendario');
+            new bootstrap.Tab(calendarTab).show();
+        }
+
+        /** Valida data, hora e conflitos da reserva */
+        function validateReservation(newRes) {
+            const startDateTime = new Date(`${newRes.startDate}T${newRes.startTime}`);
+            const endDateTime = new Date(`${newRes.endDate}T${newRes.endTime}`);
+
+            // 1. Validação de Data/Hora
+            if (endDateTime <= startDateTime) {
+                alert('Erro: A data/hora de término deve ser posterior à data/hora de início.');
+                return false;
+            }
+
+            // 2. Validação de Conflito (Sobreposição)
+            for (const existingRes of reservations) {
+                if (existingRes.room === newRes.room && existingRes.status !== 'cancelled') {
+                    const existingStart = new Date(`${existingRes.startDate}T${existingRes.startTime}`);
+                    const existingEnd = new Date(`${existingRes.endDate}T${existingRes.endTime}`);
+
+                    // Lógica de sobreposição: (StartA < EndB) e (EndA > StartB)
+                    const hasOverlap = (startDateTime < existingEnd) && (endDateTime > existingStart);
+
+                    if (hasOverlap) {
+                        alert(`Erro: Conflito de horário! A sala "${newRes.room}" já está reservada de ${formatDateTime(existingRes.startDate, existingRes.startTime)} a ${formatDateTime(existingRes.endDate, existingRes.endTime)}.`);
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /** Exclui uma reserva */
+        function deleteReservation(index) {
+            reservations.splice(index, 1);
+            saveReservationsToStorage();
+            renderReservationsTable();
+            renderCalendar(currentMonth, currentYear);
+            updateDashboard();
+        }
+
+        // --- MÓDULO DE CALENDÁRIO ---
+
+        /** Renderiza o grid do calendário para o mês e ano fornecidos */
+        function renderCalendar(month, year) {
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('currentMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normaliza para comparação de datas
+
+            // Preenche os dias do mês anterior
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            for (let i = firstDay; i > 0; i--) {
+                const day = daysInPrevMonth - i + 1;
+                calendarGrid.appendChild(createDayCell(day, new Date(year, month - 1, day), true));
+            }
+
+            // Preenche os dias do mês atual
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(year, month, i);
+                const isToday = date.getTime() === today.getTime();
+                calendarGrid.appendChild(createDayCell(i, date, false, isToday));
+            }
+
+            // Preenche os dias do próximo mês
+            const totalCells = firstDay + daysInMonth;
+            const nextMonthDays = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= nextMonthDays; i++) {
+                calendarGrid.appendChild(createDayCell(i, new Date(year, month + 1, i), true));
+            }
+        }
+
+        /** Cria uma célula de dia individual para o calendário */
+        function createDayCell(dayNumber, date, isOtherMonth = false, isToday = false) {
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+            if (isOtherMonth) dayCell.classList.add('other-month');
+
+            const dayNumSpan = document.createElement('span');
+            dayNumSpan.className = 'day-number';
+            if (isToday) dayNumSpan.classList.add('today');
+            dayNumSpan.textContent = dayNumber;
+            dayCell.appendChild(dayNumSpan);
+
+            const entriesDiv = document.createElement('div');
+            entriesDiv.className = 'reservation-entries';
+
+            // Adiciona reservas à célula
+            displayReservationsOnCalendar(entriesDiv, date);
+            dayCell.appendChild(entriesDiv);
+
+            return dayCell;
+        }
+
+        /** Filtra e exibe as reservas para um dia específico no calendário */
+        function displayReservationsOnCalendar(entriesDiv, date) {
+            const checkDate = new Date(date);
+            checkDate.setHours(0, 0, 0, 0); // Normaliza data para comparação
+
+            const dailyReservations = reservations.filter(res => {
+                if (res.status === 'cancelled') return false;
+
+                const [sy, sm, sd] = res.startDate.split('-').map(Number);
+                const resStart = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+
+                const [ey, em, ed] = res.endDate.split('-').map(Number);
+                const resEnd = new Date(ey, em - 1, ed, 0, 0, 0, 0);
+
+
+                // Verifica se a data 'checkDate' está dentro do intervalo da reserva
+                return checkDate >= resStart && checkDate <= resEnd;
+            });
+
+            dailyReservations.forEach((res, index) => {
+                const entry = document.createElement('a');
+                entry.href = "#";
+                entry.className = `reservation-entry status-${res.status}`;
+                entry.textContent = `${res.startTime.substring(0, 5)} - ${res.eventName} (${res.room})`;
+                entry.title = `${res.eventName} (${res.room})\nStatus: ${res.status}`;
+
+                // Encontrar o índice original para o modal
+                const originalIndex = reservations.findIndex(r => r.id === res.id);
+                entry.onclick = (e) => {
+                    e.preventDefault();
+                    showReservationDetails(originalIndex);
+                };
+
+                entriesDiv.appendChild(entry);
+            });
+        }
+
+        /** Mostra o modal com detalhes da reserva */
+        function showReservationDetails(index) {
+            const res = reservations[index];
+            if (!res) return;
+
+            const body = document.getElementById('reservationDetailBody');
+            body.innerHTML = `
+                <h4 class="mb-3">${res.eventName}</h4>
+                <p><strong><i class="bi bi-person me-2"></i>Responsável:</strong> ${res.respName} (${res.respEmail})</p>
+                <p><strong><i class="bi bi-door-open me-2"></i>Sala:</strong> ${res.room}</p>
+                <p><strong><i class="bi bi-calendar-check me-2"></i>Início:</strong> ${formatDateTime(res.startDate, res.startTime)}</p>
+                <p><strong><i class="bi bi-calendar-x me-2"></i>Término:</strong> ${formatDateTime(res.endDate, res.endTime)}</p>
+                <p><strong><i class="bi bi-info-circle me-2"></i>Status:</strong> <span class="badge bg-${res.status === 'pending' ? 'warning text-dark' : (res.status === 'confirmed' ? 'success' : 'danger')}">${res.status}</span></p>
+                <hr>
+                <p><strong>Observações:</strong></p>
+                <p>${res.observations || 'Nenhuma.'}</p>
+            `;
+            reservationDetailModal.show();
+        }
+
+        /** Navega para o mês anterior */
+        function showPrevMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentMonth, currentYear);
+        }
+
+        /** Navega para o próximo mês */
+        function showNextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar(currentMonth, currentYear);
+        }
+
+        // --- DASHBOARD ---
+
+        function updateDashboard() {
+            document.getElementById('dashboard-total-rooms').textContent = rooms.length;
+
+            const now = new Date();
+            const activeReservations = reservations.filter(res => {
+                const endDateTime = new Date(`${res.endDate}T${res.endTime}`);
+                return res.status === 'confirmed' && endDateTime > now;
+            });
+
+            const pendingReservations = reservations.filter(res => res.status === 'pending');
+
+            document.getElementById('dashboard-total-reservations').textContent = activeReservations.length;
+            document.getElementById('dashboard-pending-reservations').textContent = pendingReservations.length;
+
+            // Próximas reservas
+            const upcomingList = document.getElementById('upcoming-reservations-list');
+            const upcoming = reservations.filter(res => {
+                const startDateTime = new Date(`${res.startDate}T${res.startTime}`);
+                return res.status !== 'cancelled' && startDateTime > now;
+            })
+                .sort((a, b) => new Date(`${a.startDate}T${a.startTime}`) - new Date(`${b.startDate}T${b.startTime}`))
+                .slice(0, 5); // Pega as próximas 5
+
+            upcomingList.innerHTML = '';
+            if (upcoming.length === 0) {
+                upcomingList.innerHTML = '<li class="list-group-item">Nenhuma reserva futura encontrada.</li>';
+            } else {
+                upcoming.forEach(res => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <div>
+                            <strong>${res.eventName}</strong> (${res.room})<br>
+                            <small>${formatDateTime(res.startDate, res.startTime)}</small>
+                        </div>
+                        <span class="badge bg-${res.status === 'pending' ? 'warning text-dark' : 'success'}">${res.status}</span>
+                    `;
+                    upcomingList.appendChild(li);
+                });
+            }
+        }
+
+
+        // --- FUNÇÕES UTILITÁRIAS ---
+
+        /** Formata data e hora para exibição amigável (DD/MM/AAAA HH:MM) */
+        function formatDateTime(date, time) {
+            const [year, month, day] = date.split('-');
+            return `${day}/${month}/${year} às ${time}`;
+        }
+
+        /** Modal de confirmação genérico */
+        function confirmDelete(type, index) {
+            const btnConfirm = document.getElementById('btnConfirmDelete');
+
+            // Clona e substitui o botão para remover listeners antigos
+            const newBtnConfirm = btnConfirm.cloneNode(true);
+            btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+
+            newBtnConfirm.onclick = () => {
+                if (type === 'room') {
+                    deleteRoom(index);
+                } else if (type === 'reservation') {
+                    deleteReservation(index);
+                }
+                confirmDeleteModal.hide();
+            };
+            confirmDeleteModal.show();
+        }
+
+        // --- NOVO JAVASCRIPT (Salas Disponíveis) ---
+
+        // --- Função para atualizar salas disponíveis no Dashboard ---
+        function updateAvailableRooms() {
+            const today = new Date().toISOString().split('T')[0];
+
+            // Encontra salas reservadas HOJE
+            const reservedRoomsToday = reservations
+                .filter(r => {
+                    // Verifica se 'hoje' está dentro do intervalo da reserva
+                    const resStart = r.startDate;
+                    const resEnd = r.endDate;
+                    return today >= resStart && today <= resEnd && r.status !== 'cancelled';
+                })
+                .map(r => r.room); // Pega apenas o nome da sala
+
+            // Filtra as salas que NÃO estão na lista de reservadas
+            const availableRooms = rooms.filter(r => !reservedRoomsToday.includes(r.name));
+
+            document.getElementById("dashboard-available-rooms").textContent = availableRooms.length;
+
+            const list = document.getElementById("availableRoomsList");
+            list.innerHTML = "";
+
+            if (availableRooms.length === 0) {
+                const li = document.createElement("li");
+                li.className = "list-group-item text-center";
+                li.textContent = "Nenhuma sala disponível hoje.";
+                list.appendChild(li);
+            } else {
+                availableRooms.forEach(r => {
+                    const li = document.createElement("li");
+                    li.className = "list-group-item";
+                    li.textContent = `${r.name} (Cap: ${r.capacity})`;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        // --- Evento: abrir modal de salas disponíveis ---
+        document.getElementById("card-salas-disponiveis").addEventListener("click", () => {
+            const modal = new bootstrap.Modal(document.getElementById("availableRoomsModal"));
+            updateAvailableRooms(); // Atualiza a lista antes de mostrar
+            modal.show();
+        });
+
+        // --- Integrar com o dashboard existente (Sobrescreve a função) ---
+        const oldUpdateDashboard = updateDashboard;
+
+        updateDashboard = function () {
+            oldUpdateDashboard(); // Chama a função original
+            updateAvailableRooms(); // Chama a nova função
+        };
+        // --- SISTEMA DE LOGIN E PERMISSÕES ---
+
+let currentUser = null;
+
+// Usuários pré-definidos
+const users = [
+    { username: 'admin', password: '1234', role: 'admin' },
+    { username: 'usuario', password: '1234', role: 'user' }
+];
+
+// Exibir modal de login ao iniciar
+document.addEventListener('DOMContentLoaded', () => {
+    showLoginModal();
+});
+
+function showLoginModal() {
+    const loginHTML = `
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-parish text-white">
+                    <h5 class="modal-title">Login do Sistema</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginUser" class="form-label">Usuário</label>
+                            <input type="text" id="loginUser" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPass" class="form-label">Senha</label>
+                            <input type="password" id="loginPass" class="form-control" required>
+                        </div>
+                        <div id="loginError" class="text-danger small mb-2" style="display:none;">Usuário ou senha incorretos.</div>
+                        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', loginHTML);
+
+    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'), { backdrop: 'static', keyboard: false });
+    loginModal.show();
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = document.getElementById('loginUser').value.trim();
+        const password = document.getElementById('loginPass').value.trim();
+
+        const foundUser = users.find(u => u.username === username && u.password === password);
+        if (!foundUser) {
+            document.getElementById('loginError').style.display = 'block';
+            return;
+        }
+
+        currentUser = foundUser;
+        loginModal.hide();
+        applyPermissions();
+        updateUserMenu();
+    });
+}
+
+// Aplica permissões conforme o tipo de usuário
+function applyPermissions() {
+    const adminOnlyElements = document.querySelectorAll('.btn-danger, .btn-warning, #nav-salas');
+    adminOnlyElements.forEach(el => {
+        if (currentUser.role !== 'admin') {
+            el.style.display = 'none';
+        } else {
+            el.style.display = '';
+        }
+    });
+
+    // Bloquear abas não permitidas
+    if (currentUser.role === 'user') {
+        document.getElementById('nav-dashboard').classList.remove('active');
+        document.getElementById('tab-dashboard').classList.remove('show', 'active');
+        document.getElementById('nav-nova-reserva').classList.add('active');
+        document.getElementById('tab-nova-reserva').classList.add('show', 'active');
+    }
+}
+
+// Atualiza nome e botão "Sair" no menu superior
+function updateUserMenu() {
+    const dropdown = document.getElementById('navbarDropdownMenuLink');
+    dropdown.innerHTML = `<i class="bi bi-person-circle me-1"></i> ${currentUser.username} (${currentUser.role === 'admin' ? 'Administrador' : 'Usuário'})`;
+}
+
+// Função para logout
+function logout() {
+    localStorage.clear();
+    location.reload();
+}
+
+// Substitui o botão "Sair" no menu
+setTimeout(() => {
+    const sairItem = document.querySelector('a.dropdown-item[href="#"] i.bi-box-arrow-right');
+    if (sairItem) {
+        const parent = sairItem.closest('a');
+        parent.setAttribute('onclick', 'logout()');
+    }
+}, 2000);
+
+
+    </script>
+</body>
+
+</html>
