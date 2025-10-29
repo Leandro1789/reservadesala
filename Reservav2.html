@@ -197,11 +197,9 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-parish fixed-top shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#">
-                <img src="./assets/logo-paroquia.png" alt="Paróquia Cristo Rei" style="height:40px; margin-right:10px;">
+                <img src="./assets/logo-paroquia.png" alt="Paróquia Cristo Rei"
                     style="height:40px; margin-right:10px; vertical-align:middle;">
                 <span class="fw-bold">Sistema de Reserva - Paróquia</span>
-
-                Sistema de Reserva - Paróquia
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu"
                 aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
@@ -216,7 +214,8 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
                             <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configurações</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right me-2"></i>Sair</a>
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i
+                                        class="bi bi-box-arrow-right me-2"></i>Sair</a>
                             </li>
                         </ul>
                     </li>
@@ -271,8 +270,7 @@
                         aria-labelledby="nav-dashboard">
                         <h1 class="h2">Dashboard</h1>
                         <div class="text-center mb-4">
-                            <img src="./assets/logo-paroquia.png" alt="Paróquia Cristo Rei - Blumenau" style="max-width:120px; opacity:0.9;">
-
+                            <img src="./assets/logo-paroquia.png" alt="Paróquia Cristo Rei - Blumenau"
                                 style="max-width:120px; opacity:0.9;">
                             <p class="mt-2 text-muted">Paróquia Cristo Rei - Blumenau / SC</p>
                         </div>
@@ -1178,21 +1176,24 @@
         };
         // --- SISTEMA DE LOGIN E PERMISSÕES ---
 
-let currentUser = null;
+        let currentUser = null;
 
-// Usuários pré-definidos
-const users = [
-    { username: 'admin', password: '1234', role: 'admin' },
-    { username: 'usuario', password: '1234', role: 'user' }
-];
+        // !!! AVISO DE SEGURANÇA !!!
+        // Este é um sistema de login APENAS PARA TESTES (prototipagem).
+        // As senhas estão visíveis no código-fonte.
+        // NÃO USE ISSO EM UM SITE REAL (EM PRODUÇÃO).
+        const users = [
+            { username: 'admin', password: '1234', role: 'admin' },
+            { username: 'usuario', password: '1234', role: 'user' }
+        ];
 
-// Exibir modal de login ao iniciar
-document.addEventListener('DOMContentLoaded', () => {
-    showLoginModal();
-});
+        // Exibir modal de login ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            showLoginModal();
+        });
 
-function showLoginModal() {
-    const loginHTML = `
+        function showLoginModal() {
+            const loginHTML = `
     <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -1217,70 +1218,78 @@ function showLoginModal() {
         </div>
     </div>`;
 
-    document.body.insertAdjacentHTML('beforeend', loginHTML);
+            document.body.insertAdjacentHTML('beforeend', loginHTML);
 
-    const loginModal = new bootstrap.Modal(document.getElementById('loginModal'), { backdrop: 'static', keyboard: false });
-    loginModal.show();
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'), { backdrop: 'static', keyboard: false });
+            loginModal.show();
 
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = document.getElementById('loginUser').value.trim();
-        const password = document.getElementById('loginPass').value.trim();
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = document.getElementById('loginUser').value.trim();
+                const password = document.getElementById('loginPass').value.trim();
 
-        const foundUser = users.find(u => u.username === username && u.password === password);
-        if (!foundUser) {
-            document.getElementById('loginError').style.display = 'block';
-            return;
+                const foundUser = users.find(u => u.username === username && u.password === password);
+                if (!foundUser) {
+                    document.getElementById('loginError').style.display = 'block';
+                    return;
+                }
+
+                currentUser = foundUser;
+                loginModal.hide();
+                applyPermissions();
+                updateUserMenu();
+            });
         }
 
-        currentUser = foundUser;
-        loginModal.hide();
-        applyPermissions();
-        updateUserMenu();
-    });
-}
+        // Aplica permissões conforme o tipo de usuário
+        function applyPermissions() {
+            const adminOnlyElements = document.querySelectorAll('.btn-danger, .btn-warning, #nav-salas');
+            adminOnlyElements.forEach(el => {
+                if (currentUser.role !== 'admin') {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = '';
+                }
+            });
 
-// Aplica permissões conforme o tipo de usuário
-function applyPermissions() {
-    const adminOnlyElements = document.querySelectorAll('.btn-danger, .btn-warning, #nav-salas');
-    adminOnlyElements.forEach(el => {
-        if (currentUser.role !== 'admin') {
-            el.style.display = 'none';
-        } else {
-            el.style.display = '';
+            // Bloquear abas não permitidas
+            if (currentUser.role === 'user') {
+                document.getElementById('nav-dashboard').classList.remove('active');
+                document.getElementById('tab-dashboard').classList.remove('show', 'active');
+                document.getElementById('nav-nova-reserva').classList.add('active');
+                document.getElementById('tab-nova-reserva').classList.add('show', 'active');
+            }
         }
-    });
 
-    // Bloquear abas não permitidas
-    if (currentUser.role === 'user') {
-        document.getElementById('nav-dashboard').classList.remove('active');
-        document.getElementById('tab-dashboard').classList.remove('show', 'active');
-        document.getElementById('nav-nova-reserva').classList.add('active');
-        document.getElementById('tab-nova-reserva').classList.add('show', 'active');
-    }
-}
+        // Atualiza nome e botão "Sair" no menu superior
+        function updateUserMenu() {
+            const dropdown = document.getElementById('navbarDropdownMenuLink');
+            dropdown.innerHTML = `<i class="bi bi-person-circle me-1"></i> ${currentUser.username} (${currentUser.role === 'admin' ? 'Administrador' : 'Usuário'})`;
+        }
 
-// Atualiza nome e botão "Sair" no menu superior
-function updateUserMenu() {
-    const dropdown = document.getElementById('navbarDropdownMenuLink');
-    dropdown.innerHTML = `<i class="bi bi-person-circle me-1"></i> ${currentUser.username} (${currentUser.role === 'admin' ? 'Administrador' : 'Usuário'})`;
-}
+        // Função para logout
+        function logout() {
+            // *** CORREÇÃO APLICADA AQUI ***
+            // A linha 'localStorage.clear()' foi removida.
+            // Ela apagava TODAS as salas e reservas salvas pelo usuário.
+            // location.reload() já é suficiente para resetar o 'currentUser' e
+            // forçar o modal de login a aparecer novamente.
+            // localStorage.clear();
+            location.reload();
+        }
 
-// Função para logout
-function logout() {
-    localStorage.clear();
-    location.reload();
-}
-
-// Substitui o botão "Sair" no menu
-setTimeout(() => {
-    const sairItem = document.querySelector('a.dropdown-item[href="#"] i.bi-box-arrow-right');
-    if (sairItem) {
-        const parent = sairItem.closest('a');
-        parent.setAttribute('onclick', 'logout()');
-    }
-}, 2000);
-
+        // *** CORREÇÃO APLICADA AQUI ***
+        // Bloco 'setTimeout' removido. O 'onclick' foi adicionado
+        // diretamente ao HTML do botão "Sair", o que é mais estável.
+        /*
+        setTimeout(() => {
+            const sairItem = document.querySelector('a.dropdown-item[href="#"] i.bi-box-arrow-right');
+            if (sairItem) {
+                const parent = sairItem.closest('a');
+                parent.setAttribute('onclick', 'logout()');
+            }
+        }, 2000);
+        */
 
     </script>
 </body>
